@@ -1,0 +1,1172 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>打工人财富引擎 V3.0 Pro</title>
+
+<!-- Tailwind CSS -->
+<script src="https://cdn.tailwindcss.com"></script>
+<!-- FontAwesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<!-- Fonts -->
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Nunito:wght@600;800;900&family=JetBrains+Mono:wght@700&display=swap" rel="stylesheet">
+<!-- html2canvas (截图分享) -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<!-- canvas-confetti (烟花特效) -->
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+<style>
+:root {
+    --c-ocean: #4facfe;
+    --c-ocean-deep: #00f2fe;
+    --c-krabby: #FFD54A;
+    --c-ketchup: #E74C3C;
+    --c-seaweed: #2ECC71;
+    --c-wood: #FFF3E0;
+    --c-wood-dark: #FFE0B2;
+    --c-outline: #3E2723;
+    --c-text: #4E342E;
+}
+
+body {
+    background: linear-gradient(135deg, var(--c-ocean) 0%, var(--c-ocean-deep) 100%);
+    background-attachment: fixed;
+    color: var(--c-text);
+    font-family: 'Nunito', 'Segoe UI', system-ui, sans-serif;
+    margin: 0;
+    overflow-x: hidden;
+}
+.font-cartoon { font-family: 'ZCOOL KuaiLe', cursive; }
+.font-mono { font-family: 'JetBrains Mono', monospace; }
+
+/* 气泡背景 */
+.bubbles { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
+.bubble { position: absolute; bottom: -20px; background: rgba(255, 255, 255, 0.2); border-radius: 50%; animation: rise infinite ease-in; }
+@keyframes rise {
+    0% { transform: translateY(0) translateX(0); opacity: 0; }
+    50% { opacity: 1; }
+    100% { transform: translateY(-120vh) translateX(-50px); opacity: 0; }
+}
+
+/* 统一组件样式 */
+.kb-card {
+    background: var(--c-wood); border: 3px solid var(--c-outline); border-radius: 16px;
+    box-shadow: 6px 6px 0px var(--c-outline); margin-bottom: 24px; transition: transform 0.2s;
+}
+@media (max-width: 768px) { .kb-card { box-shadow: 4px 4px 0px var(--c-outline); border-width: 2px; padding: 16px !important; } }
+
+.kb-btn {
+    background: var(--c-wood-dark); border: 3px solid var(--c-outline); border-radius: 12px;
+    box-shadow: 3px 4px 0px var(--c-outline); font-weight: 800; cursor: pointer; transition: all 0.1s;
+    display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 0 16px;
+}
+.kb-btn:active { transform: translate(3px, 4px); box-shadow: 0px 0px 0px var(--c-outline); }
+.kb-btn.active { background: var(--c-krabby); }
+.kb-btn-red { background: var(--c-ketchup); color: white; }
+.kb-btn-green { background: var(--c-seaweed); color: white; }
+.kb-btn-blue { background: #3498DB; color: white; }
+.kb-btn-small { min-height: 32px; padding: 0 10px; font-size: 0.875rem; border-width: 2px; box-shadow: 2px 2px 0px var(--c-outline); border-radius: 8px;}
+.kb-btn-small:active { transform: translate(2px, 2px); box-shadow: 0px 0px 0px var(--c-outline); }
+
+.kb-input, .kb-select {
+    background: #fff; border: 3px solid var(--c-outline); border-radius: 12px; padding: 10px 14px;
+    font-weight: bold; font-size: 16px; width: 100%; outline: none; transition: border-color 0.2s; min-height: 44px;
+}
+.kb-input:focus, .kb-select:focus { border-color: var(--c-ketchup); box-shadow: 0 0 0 3px rgba(231,76,60,0.2); }
+.kb-input-small { min-height: 36px; padding: 6px 10px; border-width: 2px; border-radius: 8px;}
+
+/* Checkbox 自定义 */
+.spec-deduct-label {
+    display: flex; align-items: center; gap: 8px; cursor: pointer; font-size: 0.875rem; font-weight: bold;
+    background: white; padding: 8px; border-radius: 8px; border: 2px solid var(--c-outline); transition: all 0.2s;
+}
+.spec-deduct-label:hover { background: #f0f0f0; }
+.spec-deduct-label input { width: 18px; height: 18px; accent-color: var(--c-krabby); cursor: pointer; }
+.spec-deduct-label.active { background: var(--c-krabby); }
+
+.progress-bar { height: 16px; border-radius: 8px; border: 2px solid var(--c-outline); overflow: hidden; background: #fff; }
+.progress-fill { height: 100%; transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+
+/* 分享海报专用隐藏层 */
+#share-poster-container {
+    position: fixed; top: -9999px; left: -9999px; width: 375px; background: linear-gradient(135deg, #fff 0%, #f3f4f6 100%);
+    border-radius: 24px; padding: 24px; box-sizing: border-box; font-family: 'Nunito', sans-serif; color: #333; z-index: -10;
+}
+
+/* Toast */
+#toast { position: fixed; top: 80px; left: 50%; transform: translateX(-50%); background: var(--c-seaweed); color: white; border: 3px solid var(--c-outline); padding: 12px 24px; border-radius: 12px; font-weight: bold; box-shadow: 3px 3px 0 var(--c-outline); z-index: 9999; opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+#toast.show { opacity: 1; }
+</style>
+</head>
+<body class="pb-24">
+
+<div class="bubbles" id="bubbles"></div>
+
+<nav class="fixed top-0 left-0 right-0 py-3 px-4 md:px-8 flex justify-between items-center z-50 bg-[var(--c-wood)]/95 border-b-3 border-[var(--c-outline)] backdrop-blur-md">
+    <div class="flex items-center gap-3">
+        <div class="text-3xl drop-shadow-md">🍔</div>
+        <div>
+            <div class="font-cartoon font-bold text-xl md:text-2xl tracking-wide text-[var(--c-ketchup)]" style="-webkit-text-stroke: 1px var(--c-outline);">打工人财富引擎 V3</div>
+        </div>
+    </div>
+</nav>
+
+<div id="toast"><i class="fa-solid fa-check-circle mr-2"></i> <span id="toast-msg">操作成功</span></div>
+
+<div class="max-w-6xl mx-auto pt-24 px-4" id="main-app">
+    
+    <!-- ================= 模块1：工资与五险二金 ================= -->
+    <section id="salary" class="mb-10">
+        <div class="flex items-center gap-3 mb-4">
+            <h2 class="font-cartoon text-3xl text-white drop-shadow-lg" style="-webkit-text-stroke: 1.5px var(--c-outline);">🏙️ 薪资与社保明细</h2>
+        </div>
+        
+        <div class="grid lg:grid-cols-5 gap-6">
+            <div class="lg:col-span-2 kb-card p-5 bg-[#FFECB3] space-y-4">
+                <!-- 城市选择 -->
+                <div>
+                    <label class="block font-bold mb-2">选择参保城市</label>
+                    <select id="city-select" class="kb-select" onchange="MVC.Controller.changeCity(this.value)">
+                        <!-- 动态填充 -->
+                    </select>
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block font-bold text-sm mb-2 text-gray-600">公积金比例</label>
+                        <select id="hf-rate" class="kb-select kb-input-small text-sm" onchange="MVC.Controller.updateModel('salary', 'hfRate', Number(this.value))">
+                            <option value="5">5%</option><option value="7">7%</option><option value="12">12%</option><option value="0">不缴</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block font-bold text-sm mb-2 text-gray-600">社保基数基准</label>
+                        <select id="base-type" class="kb-select kb-input-small text-sm" onchange="MVC.Controller.updateModel('salary', 'baseType', this.value)">
+                            <option value="actual">实际工资</option><option value="min">最低基数</option><option value="max">最高基数</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block font-bold mb-2">税前月薪 (元)</label>
+                    <input type="number" id="salary-input" class="kb-input" value="15000" oninput="MVC.Controller.updateModel('salary', 'monthly', Number(this.value))">
+                </div>
+
+                <!-- 企业年金 -->
+                <div class="flex justify-between items-center bg-white border-2 border-[var(--c-outline)] p-3 rounded-xl">
+                    <span class="font-bold text-sm"><i class="fa-solid fa-piggy-bank text-purple-500"></i> 补充企业年金 (二金)</span>
+                    <label class="spec-deduct-label !p-1 !m-0 !border-none !bg-transparent">
+                        <input type="checkbox" id="annuity-check" onchange="MVC.Controller.updateModel('salary', 'hasAnnuity', this.checked)">
+                    </label>
+                </div>
+
+                <!-- 专项附加扣除 -->
+                <div class="border-t-2 border-dashed border-[var(--c-outline)] pt-4">
+                    <label class="block font-bold mb-2 text-[var(--c-ketchup)]"><i class="fa-solid fa-file-invoice-dollar"></i> 个税专项附加扣除 (每月)</label>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-2" id="deductions-container">
+                        <!-- 动态渲染 Checkboxes 与 Input -->
+                    </div>
+                    <div class="mt-2 text-xs font-bold text-gray-500 bg-white/50 p-2 rounded">
+                        已选扣除额: <span id="total-deduction-val" class="text-red-500 font-mono text-sm">¥0</span> /月，自动抵扣个税
+                    </div>
+                </div>
+            </div>
+            
+            <div class="lg:col-span-3 space-y-4">
+                <div class="kb-card p-6 bg-white relative overflow-hidden flex flex-col justify-center">
+                    <div class="flex flex-col md:flex-row gap-4">
+                        <!-- 左侧到手金额与综合收入 -->
+                        <div class="flex-1 relative z-10">
+                            <div class="font-bold text-gray-500 mb-1">税后到手 (月净收)</div>
+                            <div class="text-5xl font-black text-[var(--c-ketchup)] mb-2 font-mono">
+                                <span class="text-2xl">¥</span><span id="v-net-monthly">0.00</span>
+                            </div>
+                            <div class="flex flex-wrap gap-2 mb-4">
+                                <div class="text-xs font-bold bg-blue-100 text-blue-700 px-2 py-1 rounded-md border border-blue-300" title="税后到手 + 个人五险二金 + 公司五险二金">
+                                    含五险二金综合月收入 ¥<span id="v-comp-monthly">0</span>
+                                </div>
+                                <div class="text-xs font-bold bg-purple-100 text-purple-700 px-2 py-1 rounded-md border border-purple-300" title="个人与公司每月缴入社保/公积金/企业年金账户的合计">
+                                    五险二金月入账 ¥<span id="v-sec-monthly">0</span>
+                                </div>
+                            </div>
+                            
+                            <!-- 年终奖设置 -->
+                            <div class="bg-blue-50 border border-blue-200 p-3 rounded-xl mt-auto">
+                                <label class="block font-bold text-xs mb-1 text-blue-800"><i class="fa-solid fa-gift"></i> 年终奖金 (税前)</label>
+                                <div class="flex items-center gap-2 mb-2">
+                                    <input type="number" class="kb-input kb-input-small text-sm" id="bonus-input" oninput="MVC.Controller.updateModel('incomes', 'bonus', Number(this.value))">
+                                </div>
+                                <div class="flex gap-1 mb-2">
+                                    <button class="kb-btn kb-btn-small flex-1 btn-tax-mode !text-xs !px-1" data-val="separate" onclick="MVC.Controller.updateModel('incomes', 'bonusTaxMode', 'separate')">单独计税</button>
+                                    <button class="kb-btn kb-btn-small flex-1 btn-tax-mode !text-xs !px-1" data-val="combined" onclick="MVC.Controller.updateModel('incomes', 'bonusTaxMode', 'combined')">并入综合</button>
+                                </div>
+                                <div class="text-xs font-bold text-gray-600 flex justify-between">
+                                    <span>年终奖税后到手:</span> <span class="font-black text-blue-700 font-mono">¥<span id="v-bonus-net">0</span></span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-gray-50 border-2 border-dashed border-gray-300 p-4 rounded-xl flex-1 text-sm shadow-inner relative overflow-hidden">
+                            <div class="absolute top-0 left-0 right-0 bg-gray-700 text-white text-xs px-2 py-1.5 font-bold text-center shadow">五险二金与个税明细表</div>
+                            <div class="mt-6 mb-2">
+                                <table class="w-full text-xs text-left border-collapse">
+                                    <thead>
+                                        <tr class="text-gray-500 border-b-2 border-gray-300">
+                                            <th class="pb-1 font-bold">项目 (费率)</th>
+                                            <th class="pb-1 text-right font-bold text-blue-700">个人扣除</th>
+                                            <th class="pb-1 text-right font-bold text-red-600">公司缴纳</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="ins-detail-body">
+                                        <!-- JS rendering -->
+                                    </tbody>
+                                </table>
+                            </div>
+                            
+                            <div class="bg-white p-3 rounded-lg border border-gray-200 mt-3 text-xs space-y-1.5 shadow-sm">
+                                <div class="flex justify-between text-gray-800 font-bold"><span>名义月薪 (税前)</span><span class="font-mono text-sm">¥<span id="v-gross-monthly">0</span></span></div>
+                                <div class="flex justify-between text-gray-800 font-bold border-b border-gray-200 pb-1 mb-1">
+                                    <span class="text-[var(--c-ketchup)]"><i class="fa-solid fa-building"></i> 实际用人总成本</span>
+                                    <span class="font-mono text-sm text-[var(--c-ketchup)]">¥<span id="v-total-cost">0</span></span>
+                                </div>
+                                <div class="flex justify-between text-gray-500"><span>个人所得税预估 (均摊)</span><span class="font-mono text-blue-600">-¥<span id="v-ind-tax">0</span></span></div>
+                                <div class="flex justify-between text-green-700 font-black text-sm pt-1"><span>= 最终打卡到手</span><span class="font-mono">¥<span id="v-final-net">0</span></span></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= 模块2：收支记账盘 ================= -->
+    <section id="savings" class="mb-10">
+        <div class="flex items-center gap-3 mb-4">
+            <h2 class="font-cartoon text-3xl text-white drop-shadow-lg" style="-webkit-text-stroke: 1.5px var(--c-outline);">📊 财务基本盘 (月度)</h2>
+        </div>
+        
+        <div class="kb-card p-5 bg-[#E1F5FE]">
+            <div class="grid md:grid-cols-2 gap-6">
+                <!-- 开支清单 -->
+                <div>
+                    <div class="flex justify-between items-center mb-3">
+                        <label class="font-bold text-gray-700"><i class="fa-solid fa-cart-shopping text-blue-500"></i> 每月固定消费清单</label>
+                        <button onclick="MVC.Controller.addExpense()" class="kb-btn kb-btn-green kb-btn-small"><i class="fa-solid fa-plus mr-1"></i> 记一笔</button>
+                    </div>
+                    <div id="expense-list" class="space-y-2 max-h-[220px] overflow-y-auto pr-2 mb-3">
+                        <!-- JS 渲染消费项 -->
+                    </div>
+                    <div class="flex justify-between items-center border-t-2 border-dashed border-gray-400 pt-3">
+                        <span class="font-black text-gray-700">总月开销:</span>
+                        <span id="v-exp-val" class="text-red-500 font-black font-mono text-xl">¥0</span>
+                    </div>
+                </div>
+
+                <!-- 额外收入与年度结余 -->
+                <div class="space-y-4">
+                    <div class="bg-white p-4 rounded-xl border-2 border-[var(--c-outline)]">
+                        <label class="font-bold text-sm flex justify-between mb-2">
+                            <span><i class="fa-solid fa-sack-dollar text-green-500"></i> 副业/外快收入 (月度)</span>
+                        </label>
+                        <input type="number" class="kb-input" id="monthly-side-input" placeholder="输入每月额外赚的钱" oninput="MVC.Controller.updateModel('incomes', 'side', Number(this.value))">
+                    </div>
+
+                    <div class="bg-white p-4 rounded-xl border-2 border-[var(--c-outline)] shadow-[4px_4px_0px_#4E342E]">
+                        <h3 class="font-black text-gray-700 mb-3 border-b-2 border-gray-100 pb-2">年度财富结算单</h3>
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-sm font-bold">
+                                <span class="text-gray-500">年总净收入</span>
+                                <span class="font-mono text-blue-600">¥<span id="v-annual-in">0</span></span>
+                            </div>
+                            <div class="flex justify-between text-sm font-bold">
+                                <span class="text-gray-500">年总支出</span>
+                                <span class="font-mono text-red-500">-¥<span id="v-annual-out">0</span></span>
+                            </div>
+                            <div class="flex justify-between items-center pt-2 border-t-2 border-dashed border-gray-200">
+                                <span class="font-black text-gray-800">当年可存下 (结余)</span>
+                                <span class="font-mono font-black text-2xl text-[var(--c-seaweed)]">¥<span id="v-annual-save">0</span></span>
+                            </div>
+                            <div class="text-right text-xs font-bold text-gray-400 mt-1">
+                                储蓄率: <span id="v-savings-rate" class="text-black">0%</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="mt-6 bg-white p-4 rounded-xl border-2 border-[var(--c-outline)]">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div>
+                        <div class="text-xs font-bold text-gray-500 mb-1">每月到手（工资+副业）</div>
+                        <div class="font-black font-mono text-lg text-blue-600">¥<span id="v-monthly-in">0</span></div>
+                    </div>
+                    <div>
+                        <div class="text-xs font-bold text-gray-500 mb-1">每月总支出</div>
+                        <div class="font-black font-mono text-lg text-red-500">-¥<span id="v-monthly-out">0</span></div>
+                    </div>
+                    <div>
+                        <div class="text-xs font-bold text-gray-500 mb-1">每月能存下</div>
+                        <div class="font-black font-mono text-lg text-[var(--c-seaweed)]">¥<span id="v-monthly-save">0</span></div>
+                    </div>
+                    <div>
+                        <div class="text-xs font-bold text-gray-500 mb-1">月度储蓄率</div>
+                        <div class="font-black font-mono text-lg text-amber-600"><span id="v-monthly-save-rate">0</span>%</div>
+                    </div>
+                </div>
+                <div class="mt-3 pt-3 border-t-2 border-dashed border-gray-200 flex flex-col md:flex-row md:justify-between md:items-center gap-1 text-sm font-bold text-gray-700">
+                    <span>全年预计可存（含年终奖税后）</span>
+                    <span class="font-mono text-green-600">¥<span id="v-yearly-save-est">0</span></span>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= 模块3：房贷与减压 ================= -->
+    <section id="mortgage" class="mb-10">
+        <div class="flex items-center gap-3 mb-4">
+            <h2 class="font-cartoon text-3xl text-white drop-shadow-lg" style="-webkit-text-stroke: 1.5px var(--c-outline);">⚓ 房贷压力测试</h2>
+        </div>
+        
+        <div class="grid lg:grid-cols-2 gap-6">
+            <div class="kb-card p-5 bg-[#E8F5E9] space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="bg-white p-3 rounded-xl border-2 border-[var(--c-outline)]">
+                        <div class="font-black text-sm mb-2 text-amber-600">商业贷款</div>
+                        <div class="mb-2"><label class="text-xs font-bold text-gray-500">本金(万)</label><input type="number" class="kb-input kb-input-small" id="c-amount" oninput="MVC.Controller.updateModel('mortgage', 'cAmount', Number(this.value))"></div>
+                        <div class="mb-2"><label class="text-xs font-bold text-gray-500">利率(%)</label><input type="number" class="kb-input kb-input-small" id="c-rate" step="0.01" oninput="MVC.Controller.updateModel('mortgage', 'cRate', Number(this.value))"></div>
+                    </div>
+                    <div class="bg-white p-3 rounded-xl border-2 border-[var(--c-outline)]">
+                        <div class="font-black text-sm mb-2 text-green-600">公积金贷款</div>
+                        <div class="mb-2"><label class="text-xs font-bold text-gray-500">本金(万)</label><input type="number" class="kb-input kb-input-small" id="f-amount" oninput="MVC.Controller.updateModel('mortgage', 'fAmount', Number(this.value))"></div>
+                        <div class="mb-2"><label class="text-xs font-bold text-gray-500">利率(%)</label><input type="number" class="kb-input kb-input-small" id="f-rate" step="0.01" oninput="MVC.Controller.updateModel('mortgage', 'fRate', Number(this.value))"></div>
+                    </div>
+                </div>
+                
+                <div class="flex gap-4 items-center">
+                    <div class="flex-1">
+                        <label class="text-xs font-bold text-gray-500 block mb-1">贷款年限(年)</label>
+                        <input type="number" class="kb-input kb-input-small" id="m-years" oninput="MVC.Controller.updateModel('mortgage', 'years', Number(this.value))">
+                    </div>
+                    <div class="flex-1">
+                        <label class="text-xs font-bold text-gray-500 block mb-1">已还期数(月)</label>
+                        <input type="number" class="kb-input kb-input-small" id="m-paid" oninput="MVC.Controller.updateModel('mortgage', 'paidMonths', Number(this.value))">
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <!-- 常规房贷信息 -->
+                <div class="kb-card p-5 bg-white !mb-0 flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+                    <div>
+                        <div class="text-sm font-bold text-gray-500 mb-3">当前每月房贷 (等额本息)</div>
+                        <div class="flex gap-8 mb-3 flex-wrap">
+                            <div>
+                                <div class="text-xs font-bold text-gray-500 mb-1">商业贷款月供</div>
+                                <div class="text-2xl font-black font-mono text-amber-600">¥<span id="v-c-payment">0.00</span></div>
+                            </div>
+                            <div>
+                                <div class="text-xs font-bold text-gray-500 mb-1">公积金贷款月供</div>
+                                <div class="text-2xl font-black font-mono text-green-600">¥<span id="v-f-payment">0.00</span></div>
+                            </div>
+                        </div>
+                        <div class="flex items-end gap-3 flex-wrap">
+                            <div>
+                                <div class="text-xs font-bold text-gray-400">合计月供</div>
+                                <div class="text-3xl font-black font-mono text-amber-600">¥<span id="v-m-payment">0.00</span></div>
+                            </div>
+                            <div class="text-xs font-bold text-gray-400 pb-1">占月薪比: <span id="v-m-ratio" class="text-red-500">0%</span></div>
+                        </div>
+                    </div>
+                    <div class="text-left md:text-right space-y-1">
+                        <div class="text-xs font-bold text-gray-600">剩余本金: <span class="font-mono text-black" id="v-m-remain-p">0</span>w</div>
+                        <div class="text-xs font-bold text-gray-600">剩余利息: <span class="font-mono text-black" id="v-m-remain-i">0</span>w</div>
+                    </div>
+                </div>
+
+                <!-- 提前还款模拟 -->
+                <div class="kb-card p-5 bg-red-50 border-red-200 !mb-0">
+                    <h3 class="font-black text-sm mb-3 flex items-center gap-2"><i class="fa-solid fa-fire text-red-500"></i> 提前还款模拟 (月供减少模式)</h3>
+                    <div class="flex gap-2 mb-4">
+                        <button class="kb-btn kb-btn-small bg-white flex-1" onclick="MVC.Controller.simulateEarlyRepay(10)">还10万</button>
+                        <button class="kb-btn kb-btn-small bg-white flex-1" onclick="MVC.Controller.simulateEarlyRepay(20)">还20万</button>
+                        <button class="kb-btn kb-btn-small bg-white flex-1" onclick="MVC.Controller.simulateEarlyRepay(50)">还50万</button>
+                        <button class="kb-btn kb-btn-small bg-gray-200" onclick="MVC.Controller.simulateEarlyRepay(0)"><i class="fa-solid fa-rotate-right"></i></button>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-3" id="early-repay-result" style="display:none;">
+                        <div class="bg-white p-3 rounded-xl border border-red-100">
+                            <div class="text-xs font-bold text-gray-500">节约利息</div>
+                            <div class="font-black font-mono text-green-600 text-lg">¥<span id="v-save-i">0</span></div>
+                        </div>
+                        <div class="bg-white p-3 rounded-xl border border-red-100">
+                            <div class="text-xs font-bold text-gray-500">新月供降低至</div>
+                            <div class="font-black font-mono text-amber-600 text-lg">¥<span id="v-new-pmt">0</span></div>
+                        </div>
+                    </div>
+                    <div id="early-repay-hint" class="text-xs font-bold text-gray-500 mt-2">点击上方按钮查看节约了多少钱</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= 模块4：目标与养老金 ================= -->
+    <section id="goals" class="mb-12">
+        <div class="flex justify-between items-center mb-4">
+            <h2 class="font-cartoon text-3xl text-white drop-shadow-lg" style="-webkit-text-stroke: 1.5px var(--c-outline);">🎯 人生目标与养老</h2>
+        </div>
+        
+        <div class="grid lg:grid-cols-2 gap-6">
+            <!-- 达成目标计算器 -->
+            <div class="kb-card p-5 bg-purple-50 border-purple-200">
+                <h3 class="font-black text-lg mb-3 flex items-center gap-2"><i class="fa-solid fa-flag text-purple-500"></i> 我要实现目标</h3>
+                
+                <div class="flex gap-2 mb-4">
+                    <input type="text" id="new-goal-name" class="kb-input kb-input-small flex-1" placeholder="新目标(如买表)">
+                    <input type="number" id="new-goal-amount" class="kb-input kb-input-small w-24" placeholder="所需金额">
+                    <button class="kb-btn kb-btn-blue kb-btn-small whitespace-nowrap" onclick="MVC.Controller.addGoal()">添加</button>
+                </div>
+                
+                <div id="goals-list" class="flex flex-wrap gap-2 mb-4 max-h-[120px] overflow-y-auto">
+                    <!-- JS动态渲染目标标签 -->
+                </div>
+                
+                <div class="bg-white p-4 rounded-xl border border-purple-200">
+                    <div class="flex justify-between items-center mb-2 border-b border-purple-100 pb-2">
+                        <span class="font-bold text-purple-800" id="v-goal-name">请选择目标</span>
+                        <span class="font-black font-mono text-purple-600">¥<span id="v-goal-amount-display">0</span></span>
+                    </div>
+                    <div class="mt-2 text-sm font-bold text-purple-800">
+                        按照当前每年 <span id="v-goal-save" class="font-mono text-black">0</span> 的存款速度，<br>
+                        实现该目标还需要奋斗：<span class="text-2xl font-black text-purple-600 font-mono ml-1" id="v-goal-years">0</span> 年
+                    </div>
+                </div>
+            </div>
+
+            <!-- 养老金估算 -->
+            <div class="kb-card p-5 bg-[#F3E5F5]">
+                <h3 class="font-black text-lg mb-4 flex items-center gap-2"><i class="fa-solid fa-bed text-purple-500"></i> 退休养老预测 (含25新规)</h3>
+                
+                <div class="grid grid-cols-2 gap-4 mb-4">
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 block mb-1">出生年份</label>
+                        <input type="number" class="kb-input kb-input-small" id="r-birth" oninput="MVC.Controller.updateModel('retire', 'birthYear', Number(this.value))">
+                    </div>
+                    <div>
+                        <label class="text-xs font-bold text-gray-500 block mb-1">原法定退休</label>
+                        <select class="kb-select kb-input-small text-sm" id="r-type" onchange="MVC.Controller.updateModel('retire', 'type', this.value)">
+                            <option value="male">男 (60岁)</option>
+                            <option value="female-55">女干部 (55岁)</option>
+                            <option value="female-50">女工人 (50岁)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="bg-white p-4 rounded-xl border-2 border-[var(--c-outline)]">
+                    <div class="flex justify-between items-end">
+                        <div>
+                            <div class="text-xs font-bold text-gray-500 mb-1">新规退休年龄</div>
+                            <div class="font-black text-xl text-black"><span id="v-r-age">0</span> 岁</div>
+                        </div>
+                        <div class="text-right">
+                            <div class="text-xs font-bold text-gray-500 mb-1">退休首月预计养老金</div>
+                            <div class="font-black font-mono text-2xl text-purple-600">¥<span id="v-r-pension">0</span></div>
+                        </div>
+                    </div>
+                    <div class="text-xs text-gray-400 mt-2">*基于当前收入及社会平均工资推演模型，结果仅供娱乐参考</div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- ================= 模块5：风险提示与 FIRE ================= -->
+    <section id="diagnosis" class="mb-12">
+        <div class="kb-card p-6 bg-[#FFF9C4] border-amber-500 relative overflow-hidden">
+            <div class="absolute -right-6 -bottom-6 text-[120px] opacity-10">🔥</div>
+            <div class="flex flex-col md:flex-row justify-between gap-6">
+                
+                <div class="flex-1 z-10 space-y-4">
+                    <h2 class="font-black text-2xl mb-2 flex items-center gap-2">🏝️ FIRE 退休进度报告</h2>
+                    <div>
+                        <div class="flex justify-between text-sm font-bold mb-1">
+                            <span>FIRE目标：攒够年支出的25倍 (<span class="font-mono text-red-600">¥<span id="v-fire-target">0</span></span>) 即可靠利息生活</span>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-white/60 p-3 rounded-lg border-2 border-dashed border-amber-400 text-sm font-bold" id="risk-alerts">
+                        <!-- JS动态插入风险提示 -->
+                    </div>
+                </div>
+
+                <div class="w-full md:w-64 bg-white p-4 rounded-xl border-2 border-[var(--c-outline)] z-10 flex flex-col justify-center items-center text-center">
+                    <div class="text-sm font-bold text-gray-500 mb-2">按当前结余速度，还需打工</div>
+                    <div class="text-5xl font-black font-mono text-green-600 mb-2"><span id="v-fire-years">0</span><span class="text-xl text-black">年</span></div>
+                    <button class="kb-btn kb-btn-green w-full" onclick="MVC.Controller.triggerConfetti()"><i class="fa-solid fa-wand-magic-sparkles mr-2"></i> 预览退休烟花</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</div>
+
+<!-- 浮动操作按钮 -->
+<div class="fixed bottom-6 right-6 flex flex-col gap-3 z-50">
+    <button onclick="MVC.Controller.generateShareCard()" class="kb-btn kb-btn-blue rounded-full w-14 h-14 !p-0 flex items-center justify-center text-xl shadow-lg" title="生成分享海报">
+        <i class="fa-solid fa-camera-retro"></i>
+    </button>
+</div>
+
+<!-- 分享海报隐藏容器 -->
+<div id="share-poster-container">
+    <div class="text-center border-b-2 border-gray-200 pb-4 mb-4">
+        <h1 class="text-2xl font-black text-gray-800 font-cartoon">🐚 打工人财富报告</h1>
+        <div class="text-xs text-gray-500 font-bold mt-1" id="poster-date">2026-07-23</div>
+    </div>
+    
+    <div class="space-y-4">
+        <div class="bg-white p-4 rounded-xl shadow-sm flex justify-between items-center border border-gray-100">
+            <span class="font-bold text-gray-600">税后月薪</span>
+            <span class="text-xl font-black text-red-500 font-mono">¥<span id="p-net">0</span></span>
+        </div>
+
+        <div class="bg-white p-4 rounded-xl shadow-sm flex justify-between items-center border border-gray-100">
+            <span class="font-bold text-gray-600">含五险二金综合月收入</span>
+            <span class="text-xl font-black text-blue-500 font-mono">¥<span id="p-comp">0</span></span>
+        </div>
+        
+        <div class="bg-white p-4 rounded-xl shadow-sm flex justify-between items-center border border-gray-100">
+            <span class="font-bold text-gray-600">年度储蓄率</span>
+            <span class="text-xl font-black text-green-500 font-mono"><span id="p-rate">0</span>%</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+            <div class="bg-purple-50 p-3 rounded-xl border border-purple-100 text-center">
+                <div class="text-xs font-bold text-gray-500">法定退休年龄</div>
+                <div class="font-black text-purple-700 text-lg"><span id="p-retire">0</span>岁</div>
+            </div>
+            <div class="bg-amber-50 p-3 rounded-xl border border-amber-100 text-center">
+                <div class="text-xs font-bold text-gray-500">FIRE预计需</div>
+                <div class="font-black text-amber-700 text-lg"><span id="p-fire">0</span>年</div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="text-center text-xs font-bold text-gray-400 mt-6 pt-4 border-t border-gray-200">
+        由 [打工人财富引擎 V3.0] 强力驱动
+    </div>
+</div>
+
+<script>
+const MVC = {
+    Model: {
+        state: {
+            city: 'beijing',
+            salary: { monthly: 15000, hfRate: 12, baseType: 'actual', hasAnnuity: false },
+            deductions: {
+                edu: { active: false, value: 2000, name: '子女教育', icon: 'fa-child' },
+                rent: { active: false, value: 1500, name: '租房', icon: 'fa-house-user' },
+                mortgage: { active: false, value: 1000, name: '房贷利息', icon: 'fa-file-signature' },
+                old: { active: false, value: 3000, name: '赡养老人', icon: 'fa-person-cane' },
+                baby: { active: false, value: 2000, name: '婴幼儿', icon: 'fa-baby' }
+            },
+            incomes: { bonus: 30000, bonusTaxMode: 'separate', side: 0 },
+            expensesList: [
+                { id: 'e1', name: '🏠 房租/房贷', amount: 3000 },
+                { id: 'e2', name: '🍔 餐饮', amount: 1500 },
+                { id: 'e3', name: '🚌 交通', amount: 500 }
+            ],
+            mortgage: { cAmount: 120, cRate: 3.6, fAmount: 80, fRate: 2.85, years: 30, paidMonths: 12 },
+            goalsList: [
+                { id: 'g1', name: '🚗 提一辆新车', amount: 200000 },
+                { id: 'g2', name: '🏠 买房首付', amount: 1000000 },
+                { id: 'g3', name: '✈️ 环游世界', amount: 50000 }
+            ],
+            activeGoalId: 'g1',
+            retire: { birthYear: 1990, type: 'male' }
+        },
+        
+        constants: {
+            cities: {
+                'beijing': { name: '北京', minBase: 6326, maxBase: 33891, defaultHf: 12 },
+                'shanghai': { name: '上海', minBase: 7310, maxBase: 36549, defaultHf: 7 },
+                'shenzhen': { name: '深圳', minBase: 3523, maxBase: 31200, defaultHf: 5 },
+                'guangzhou': { name: '广州', minBase: 3800, maxBase: 38082, defaultHf: 5 },
+                'hangzhou': { name: '杭州', minBase: 3957, maxBase: 24060, defaultHf: 12 },
+                'chengdu': { name: '成都', minBase: 4246, maxBase: 21228, defaultHf: 12 },
+                'wuhan': { name: '武汉', minBase: 3740, maxBase: 21114, defaultHf: 8 },
+                'xian': { name: '西安', minBase: 3800, maxBase: 20000, defaultHf: 12 },
+                'custom': { name: '自定义', minBase: 4000, maxBase: 25000, defaultHf: 8 }
+            }
+        },
+
+        cache: {
+            annualNet: 0, annualSave: 0, netMonthly: 0, specDeductMonth: 0,
+            compensationMonthly: 0, secMonthly: 0,
+            monthlyIn: 0, monthlyOut: 0, monthlySave: 0, monthlySaveRate: 0
+        },
+
+        save() { localStorage.setItem('worker_wealth_v3', JSON.stringify(this.state)); },
+        load() {
+            const saved = localStorage.getItem('worker_wealth_v3');
+            if (saved) { try { this.state = {...this.state, ...JSON.parse(saved)}; } catch(e){} }
+        }
+    },
+
+    Controller: {
+        init() {
+            MVC.Model.load();
+            if(!MVC.Model.state.expensesList) MVC.Model.state.expensesList = [{ id: 'e1', name: '总开销', amount: 5000 }];
+            if(!MVC.Model.state.goalsList) MVC.Model.state.goalsList = [{ id: 'g1', name: '默认目标', amount: 200000 }];
+            
+            this.bindUIParams();
+            this.populateCities();
+            this.renderDeductions();
+            this.renderExpenses();
+            this.renderGoals();
+            this.calculateAll();
+        },
+
+        updateModel(module, key, val) {
+            MVC.Model.state[module][key] = val;
+            this.calculateAll();
+        },
+
+        bindUIParams() {
+            const s = MVC.Model.state;
+            document.getElementById('city-select').value = s.city;
+            document.getElementById('salary-input').value = s.salary.monthly;
+            document.getElementById('hf-rate').value = s.salary.hfRate;
+            document.getElementById('base-type').value = s.salary.baseType;
+            document.getElementById('bonus-input').value = s.incomes.bonus;
+            document.getElementById('annuity-check').checked = s.salary.hasAnnuity || false;
+            document.getElementById('monthly-side-input').value = s.incomes.side || 0;
+            
+            document.getElementById('c-amount').value = s.mortgage.cAmount;
+            document.getElementById('c-rate').value = s.mortgage.cRate;
+            document.getElementById('f-amount').value = s.mortgage.fAmount;
+            document.getElementById('f-rate').value = s.mortgage.fRate;
+            document.getElementById('m-years').value = s.mortgage.years;
+            document.getElementById('m-paid').value = s.mortgage.paidMonths;
+
+            document.getElementById('r-birth').value = s.retire.birthYear;
+            document.getElementById('r-type').value = s.retire.type;
+        },
+
+        populateCities() {
+            const select = document.getElementById('city-select');
+            select.innerHTML = '';
+            for (let k in MVC.Model.constants.cities) {
+                let opt = document.createElement('option');
+                opt.value = k; opt.text = MVC.Model.constants.cities[k].name;
+                select.add(opt);
+            }
+            select.value = MVC.Model.state.city;
+        },
+
+        changeCity(cityKey) {
+            MVC.Model.state.city = cityKey;
+            const cityData = MVC.Model.constants.cities[cityKey];
+            MVC.Model.state.salary.hfRate = cityData.defaultHf;
+            document.getElementById('hf-rate').value = cityData.defaultHf;
+            this.calculateAll();
+        },
+
+        renderDeductions() {
+            const container = document.getElementById('deductions-container');
+            const deductions = MVC.Model.state.deductions;
+            container.innerHTML = '';
+            for(let key in deductions) {
+                const item = deductions[key];
+                const isActive = typeof item === 'boolean' ? item : item.active;
+                const val = typeof item === 'boolean' ? 2000 : item.value;
+                const name = typeof item === 'boolean' ? key : item.name;
+                const icon = typeof item === 'boolean' ? 'fa-check' : item.icon;
+                
+                const div = document.createElement('div');
+                div.className = `flex items-center justify-between p-2 rounded-lg border-2 border-[var(--c-outline)] transition-colors ${isActive ? 'bg-[var(--c-krabby)]' : 'bg-white'}`;
+                div.innerHTML = `
+                    <label class="flex items-center gap-2 cursor-pointer text-sm font-bold flex-1">
+                        <input type="checkbox" ${isActive ? 'checked' : ''} class="w-4 h-4 accent-[var(--c-ketchup)]" onchange="MVC.Controller.toggleDeduction('${key}', this.checked)">
+                        <i class="fa-solid ${icon} w-4 text-center"></i> <span>${name}</span>
+                    </label>
+                    <input type="number" class="kb-input kb-input-small w-20 text-center text-sm font-mono ml-2 !p-1 bg-white" value="${val}" ${isActive ? '' : 'disabled style="opacity:0.5"'} oninput="MVC.Controller.updateDeductionVal('${key}', this.value)">
+                `;
+                container.appendChild(div);
+            }
+        },
+
+        toggleDeduction(key, isChecked) {
+            if(typeof MVC.Model.state.deductions[key] === 'boolean') {
+                MVC.Model.state.deductions[key] = { active: isChecked, value: 2000, name: key, icon: 'fa-check' };
+            } else {
+                MVC.Model.state.deductions[key].active = isChecked;
+            }
+            this.renderDeductions();
+            this.calculateAll();
+        },
+
+        updateDeductionVal(key, val) {
+            if(MVC.Model.state.deductions[key] && typeof MVC.Model.state.deductions[key] !== 'boolean') {
+                MVC.Model.state.deductions[key].value = Number(val) || 0;
+                this.calculateAll();
+            }
+        },
+
+        renderExpenses() {
+            const list = document.getElementById('expense-list');
+            list.innerHTML = '';
+            MVC.Model.state.expensesList.forEach((exp) => {
+                const div = document.createElement('div');
+                div.className = 'flex items-center gap-2 bg-gray-50 p-2 rounded-lg border border-gray-200';
+                div.innerHTML = `
+                    <input type="text" class="kb-input kb-input-small text-sm flex-1 !p-1.5" value="${exp.name}" onchange="MVC.Controller.updateExp('${exp.id}','name',this.value)">
+                    <input type="number" class="kb-input kb-input-small text-sm w-24 text-center !p-1.5 font-mono" value="${exp.amount}" oninput="MVC.Controller.updateExp('${exp.id}','amount',this.value)">
+                    <button onclick="MVC.Controller.removeExp('${exp.id}')" class="kb-btn kb-btn-red kb-btn-small !px-2"><i class="fa-solid fa-trash text-xs"></i></button>
+                `;
+                list.appendChild(div);
+            });
+            this.updateExpenseTotal();
+        },
+        updateExpenseTotal() {
+            let total = 0;
+            MVC.Model.state.expensesList.forEach(exp => total += (Number(exp.amount) || 0));
+            document.getElementById('v-exp-val').innerText = '¥' + total.toLocaleString();
+        },
+        updateExp(id, key, val) {
+            const item = MVC.Model.state.expensesList.find(e => e.id === id);
+            if(item) {
+                item[key] = key === 'amount' ? (Number(val) || 0) : val;
+                this.calculateAll();
+                if(key==='name') this.renderExpenses();
+                if(key==='amount') this.updateExpenseTotal();
+            }
+        },
+        addExpense() {
+            MVC.Model.state.expensesList.push({ id: '_' + Math.random().toString(36).substr(2, 9), name: '🆕 新支出账目', amount: 500 });
+            this.renderExpenses(); this.calculateAll();
+        },
+        removeExp(id) {
+            MVC.Model.state.expensesList = MVC.Model.state.expensesList.filter(e => e.id !== id);
+            this.renderExpenses(); this.calculateAll();
+        },
+
+        renderGoals() {
+            const list = document.getElementById('goals-list');
+            list.innerHTML = '';
+            const state = MVC.Model.state;
+            state.goalsList.forEach(goal => {
+                const isActive = state.activeGoalId === goal.id;
+                const btn = document.createElement('div');
+                btn.className = `flex items-center gap-1 kb-btn kb-btn-small ${isActive ? 'active' : 'bg-white'}`;
+                btn.innerHTML = `
+                    <span class="cursor-pointer font-bold" onclick="MVC.Controller.setActiveGoal('${goal.id}')">${goal.name}</span>
+                    <i class="fa-solid fa-xmark text-gray-400 hover:text-red-600 ml-1 cursor-pointer" onclick="MVC.Controller.removeGoal('${goal.id}')"></i>
+                `;
+                list.appendChild(btn);
+            });
+            
+            const activeGoal = state.goalsList.find(g => g.id === state.activeGoalId);
+            if (activeGoal) {
+                document.getElementById('v-goal-name').innerText = "当前测算: " + activeGoal.name;
+                document.getElementById('v-goal-amount-display').innerText = activeGoal.amount.toLocaleString();
+            } else {
+                document.getElementById('v-goal-name').innerText = "未选择目标";
+                document.getElementById('v-goal-amount-display').innerText = "0";
+            }
+        },
+        addGoal() {
+            const nameInp = document.getElementById('new-goal-name');
+            const amtInp = document.getElementById('new-goal-amount');
+            const name = nameInp.value.trim() || '未命名目标';
+            const amount = Number(amtInp.value) || 10000;
+            const id = '_' + Math.random().toString(36).substr(2, 9);
+            MVC.Model.state.goalsList.push({ id, name, amount });
+            MVC.Model.state.activeGoalId = id;
+            nameInp.value = ''; amtInp.value = '';
+            this.renderGoals(); this.calculateAll();
+        },
+        removeGoal(id) {
+            MVC.Model.state.goalsList = MVC.Model.state.goalsList.filter(g => g.id !== id);
+            if (MVC.Model.state.activeGoalId === id && MVC.Model.state.goalsList.length > 0) {
+                MVC.Model.state.activeGoalId = MVC.Model.state.goalsList[0].id;
+            } else if (MVC.Model.state.goalsList.length === 0) {
+                MVC.Model.state.activeGoalId = null;
+            }
+            this.renderGoals(); this.calculateAll();
+        },
+        setActiveGoal(id) {
+            MVC.Model.state.activeGoalId = id;
+            this.renderGoals(); this.calculateAll();
+        },
+
+        calculateAll() {
+            MVC.Model.save();
+            this.calcSalaryAndTax();
+            this.calcMortgage();
+            this.calcRetirement();
+            this.calcProjections();
+            this.generateAlerts();
+            
+            document.querySelectorAll('.btn-tax-mode').forEach(b => b.classList.toggle('active', b.dataset.val === MVC.Model.state.incomes.bonusTaxMode));
+            document.getElementById('early-repay-result').style.display = 'none';
+        },
+
+        calcTaxRate(taxable) {
+            if (taxable<=0) return {rate:0, deduct:0};
+            if (taxable<=36000) return {rate:0.03, deduct:0};
+            if (taxable<=144000) return {rate:0.1, deduct:2520};
+            if (taxable<=300000) return {rate:0.2, deduct:16920};
+            if (taxable<=420000) return {rate:0.25, deduct:31920};
+            if (taxable<=660000) return {rate:0.3, deduct:52920};
+            if (taxable<=960000) return {rate:0.35, deduct:85920};
+            return {rate:0.45, deduct:181920};
+        },
+        
+        calcMonthlyBonusTaxRate(monthlyBonus) {
+            if (monthlyBonus<=0) return {rate:0, deduct:0};
+            if (monthlyBonus<=3000) return {rate:0.03, deduct:0};
+            if (monthlyBonus<=12000) return {rate:0.1, deduct:210};
+            if (monthlyBonus<=25000) return {rate:0.2, deduct:1410};
+            if (monthlyBonus<=35000) return {rate:0.25, deduct:2660};
+            if (monthlyBonus<=55000) return {rate:0.3, deduct:4410};
+            if (monthlyBonus<=80000) return {rate:0.35, deduct:7160};
+            return {rate:0.45, deduct:15160};
+        },
+
+        calcSalaryAndTax() {
+            const st = MVC.Model.state;
+            const cityData = MVC.Model.constants.cities[st.city];
+            const mGross = st.salary.monthly;
+            
+            // 1. 确定社保基数
+            let base = mGross;
+            if(st.salary.baseType === 'min') base = cityData.minBase;
+            if(st.salary.baseType === 'max') base = cityData.maxBase;
+            base = Math.max(cityData.minBase, Math.min(cityData.maxBase, base));
+
+            // 2. 五险二金 个人与企业部分详细计算
+            const details = {
+                pen: { p: base * 0.08, c: base * 0.16, name: '养老保险(8%|16%)' },
+                med: { p: base * 0.02, c: base * 0.09, name: '医疗保险(2%|9%)' },
+                unemp: { p: base * 0.005, c: base * 0.005, name: '失业保险(0.5%)' },
+                inj: { p: 0, c: base * 0.004, name: '工伤保险(0|0.4%)' },
+                mat: { p: 0, c: base * 0.008, name: '生育保险(0|0.8%)' },
+                hf: { p: base * (st.salary.hfRate/100), c: base * (st.salary.hfRate/100), name: `公积金(${st.salary.hfRate}%)` },
+                annuity: { p: st.salary.hasAnnuity ? base * 0.04 : 0, c: st.salary.hasAnnuity ? base * 0.08 : 0, name: '企业年金(4%|8%)' }
+            };
+
+            let pSec = 0, cSec = 0;
+            for(let k in details) {
+                pSec += details[k].p;
+                cSec += details[k].c;
+            }
+            
+            const totalCost = mGross + cSec; // 公司总用人成本
+            
+            // 3. 专项附加扣除
+            let specDeductMonth = 0;
+            for(let key in st.deductions) {
+                const item = st.deductions[key];
+                if(typeof item === 'boolean') {
+                    if(item) specDeductMonth += 2000;
+                } else {
+                    if(item.active) specDeductMonth += item.value;
+                }
+            }
+            
+            // 4. 计算个税 (年化)
+            const annualGross = mGross * 12;
+            const annualSec = pSec * 12;
+            const annualSpecDeduct = specDeductMonth * 12;
+            const baseDeduct = 60000;
+            
+            let annualTaxable = Math.max(0, annualGross - annualSec - annualSpecDeduct - baseDeduct);
+            let annualTax = 0;
+            let bonusNet = 0;
+
+            if (st.incomes.bonusTaxMode === 'combined') {
+                annualTaxable += st.incomes.bonus;
+                const tInfo = this.calcTaxRate(annualTaxable);
+                annualTax = annualTaxable * tInfo.rate - tInfo.deduct;
+                bonusNet = st.incomes.bonus; // 无法单独拆分，视为全额放入总池
+            } else {
+                const tInfo = this.calcTaxRate(annualTaxable);
+                annualTax = annualTaxable * tInfo.rate - tInfo.deduct;
+                if(st.incomes.bonus > 0) {
+                    const bInfo = this.calcMonthlyBonusTaxRate(st.incomes.bonus / 12);
+                    const bTax = st.incomes.bonus * bInfo.rate - bInfo.deduct;
+                    bonusNet = st.incomes.bonus - bTax;
+                }
+            }
+            
+            const avgMonthlyTax = annualTax / 12;
+            const mNet = mGross - pSec - avgMonthlyTax; // 均摊月到手
+            
+            const side = Number(st.incomes.side) || 0;
+            const compensationMonthly = mNet + pSec + cSec;
+            const secMonthly = pSec + cSec;
+            const monthlyIn = mNet + side;
+            let monthlyOut = 0;
+            if(st.expensesList) st.expensesList.forEach(e => monthlyOut += e.amount);
+            const monthlySave = monthlyIn - monthlyOut;
+            const monthlySaveRate = monthlyIn > 0 ? (monthlySave / monthlyIn * 100) : 0;
+
+            MVC.Model.cache.netMonthly = mNet;
+            MVC.Model.cache.compensationMonthly = compensationMonthly;
+            MVC.Model.cache.secMonthly = secMonthly;
+            MVC.Model.cache.monthlyIn = monthlyIn;
+            MVC.Model.cache.monthlyOut = monthlyOut;
+            MVC.Model.cache.monthlySave = monthlySave;
+            MVC.Model.cache.monthlySaveRate = monthlySaveRate;
+            MVC.Model.cache.annualNet = mNet * 12 + bonusNet + (side * 12);
+            MVC.Model.cache.annualSave = MVC.Model.cache.annualNet - (monthlyOut * 12);
+            MVC.Model.cache.specDeductMonth = specDeductMonth;
+
+            // 渲染工资 View (传入明细表)
+            MVC.View.renderSalary(mNet, mGross, pSec, cSec, avgMonthlyTax, totalCost, compensationMonthly, secMonthly, specDeductMonth, bonusNet, details);
+            MVC.View.renderCashflow(monthlyIn, monthlyOut, monthlySave, monthlySaveRate);
+        },
+
+        calcMortgageEngine(amountW, ratePct, years, paidM) {
+            if(amountW<=0 || years<=0) return { pmt: 0, remP: 0, remI: 0 };
+            const P = amountW * 10000;
+            const r = ratePct / 100 / 12;
+            const N = years * 12;
+            const pmt = P * r * Math.pow(1+r, N) / (Math.pow(1+r, N) - 1);
+            let remP = P;
+            for(let i=0; i<Math.min(paidM, N); i++) {
+                let interest = remP * r;
+                remP -= (pmt - interest);
+            }
+            remP = Math.max(0, remP);
+            const remN = N - paidM;
+            let remI = Math.max(0, pmt * remN - remP);
+            return { pmt, remP, remI, N, remN, r };
+        },
+
+        calcMortgage() {
+            const m = MVC.Model.state.mortgage;
+            const resC = this.calcMortgageEngine(m.cAmount, m.cRate, m.years, m.paidMonths);
+            const resF = this.calcMortgageEngine(m.fAmount, m.fRate, m.years, m.paidMonths);
+            const cPmt = resC.pmt;
+            const fPmt = resF.pmt;
+            const totalPmt = cPmt + fPmt;
+            const totalRemP = (resC.remP + resF.remP) / 10000;
+            const totalRemI = (resC.remI + resF.remI) / 10000;
+            const ratio = MVC.Model.cache.netMonthly > 0 ? (totalPmt / MVC.Model.cache.netMonthly * 100) : 0;
+            MVC.View.renderMortgage(cPmt, fPmt, totalPmt, ratio, totalRemP, totalRemI);
+        },
+
+        simulateEarlyRepay(amountW) {
+            if(amountW === 0) { document.getElementById('early-repay-result').style.display = 'none'; return; }
+            const m = MVC.Model.state.mortgage;
+            const resC = this.calcMortgageEngine(m.cAmount, m.cRate, m.years, m.paidMonths);
+            const resF = this.calcMortgageEngine(m.fAmount, m.fRate, m.years, m.paidMonths);
+            const oldRemP = resC.remP + resF.remP;
+            const oldRemI = resC.remI + resF.remI;
+            
+            let repayP = amountW * 10000;
+            if(repayP > oldRemP) repayP = oldRemP;
+            if(repayP <= 0) return;
+
+            let newCRemP = resC.remP;
+            let newFRemP = resF.remP;
+            
+            if(repayP >= newCRemP) {
+                repayP -= newCRemP;
+                newCRemP = 0;
+                newFRemP -= repayP;
+            } else {
+                newCRemP -= repayP;
+            }
+            
+            const calcNew = (newP, r, remN) => {
+                if(newP<=0 || remN<=0) return {pmt:0, i:0};
+                const pmt = newP * r * Math.pow(1+r, remN) / (Math.pow(1+r, remN) - 1);
+                return { pmt: pmt, i: pmt*remN - newP };
+            };
+
+            const nC = calcNew(newCRemP, resC.r, resC.remN);
+            const nF = calcNew(newFRemP, resF.r, resF.remN);
+
+            const newTotalPmt = nC.pmt + nF.pmt;
+            const newTotalI = nC.i + nF.i;
+            const savedI = oldRemI - newTotalI;
+
+            document.getElementById('early-repay-result').style.display = 'grid';
+            document.getElementById('v-save-i').innerText = savedI.toLocaleString('zh-CN', {maximumFractionDigits:0});
+            document.getElementById('v-new-pmt').innerText = newTotalPmt.toLocaleString('zh-CN', {maximumFractionDigits:0});
+        },
+
+        calcRetirement() {
+            const r = MVC.Model.state.retire;
+            let baseAge = r.type === 'male' ? 60 : (r.type === 'female-50' ? 50 : 55);
+            const baseYear = 2025 - baseAge;
+            const diffMonths = (r.birthYear - baseYear) * 12;
+            let step = 4, maxDelay = 36;
+            if(r.type === 'female-50') { step = 2; maxDelay = 60; }
+            let delay = diffMonths >= 0 ? Math.min(Math.floor(diffMonths / step) + 1, maxDelay) : 0;
+            const newAge = baseAge + (delay/12);
+            
+            const yrsLeft = newAge - (new Date().getFullYear() - r.birthYear);
+            let pension = 0;
+            if(yrsLeft > 0 && MVC.Model.state.salary.monthly > 0) {
+                pension = MVC.Model.state.salary.monthly * 0.45 * Math.pow(1.03, yrsLeft);
+            }
+            MVC.View.renderRetirement(newAge, pension);
+        },
+
+        calcProjections() {
+            const annualIn = MVC.Model.cache.annualNet;
+            const monthlyOut = MVC.Model.cache.monthlyOut || 0;
+            const annualOut = monthlyOut * 12;
+            const annualSave = MVC.Model.cache.annualSave;
+            const rate = annualIn > 0 ? (annualSave / annualIn * 100) : 0;
+
+            const fireTarget = annualOut * 25;
+            let fireYears = 0;
+            if (annualSave > 0) {
+                fireYears = fireTarget / annualSave;
+            } else {
+                fireYears = 999;
+            }
+
+            let goalYears = 0;
+            const activeGoal = MVC.Model.state.goalsList ? MVC.Model.state.goalsList.find(g => g.id === MVC.Model.state.activeGoalId) : null;
+            const targetAmount = activeGoal ? activeGoal.amount : 0;
+            if (targetAmount > 0 && annualSave > 0) {
+                goalYears = targetAmount / annualSave;
+            }
+
+            MVC.View.renderProjections(annualIn, annualOut, annualSave, rate, fireTarget, fireYears, goalYears);
+        },
+
+        generateAlerts() {
+            const ratio = parseFloat(document.getElementById('v-m-ratio').innerText);
+            const monthlySaveRate = MVC.Model.cache.monthlySaveRate || 0;
+            const monthlySave = MVC.Model.cache.monthlySave || 0;
+
+            let alertsHTML = '';
+            if (ratio > 50) alertsHTML += `<div class="text-red-600 mb-1">⚠ 房贷占月薪 > 50%，现金流极为脆弱，请注意断供风险！</div>`;
+            if (monthlySave < 0) alertsHTML += `<div class="text-red-600 mb-1">⚠ 每月可存为负，当前支出已经超过到手收入，请优先削减固定支出。</div>`;
+            else if (monthlySaveRate < 10) alertsHTML += `<div class="text-orange-600 mb-1">⚠ 月度储蓄率极低 (<10%)，月光族预警，抗风险能力差。</div>`;
+            if (alertsHTML === '') alertsHTML = `<div class="text-green-600">✅ 财富模型运行平稳，暂时没有发现致命风险。继续保持！</div>`;
+            
+            document.getElementById('risk-alerts').innerHTML = alertsHTML;
+        },
+
+        showToast(msg) {
+            const t = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 2000);
+        },
+
+        triggerConfetti() {
+            confetti({ particleCount: 150, spread: 80, origin: { y: 0.6 }, zIndex: 9999, colors: ['#4facfe', '#FFD54A', '#E74C3C', '#2ECC71'] });
+        },
+
+        generateShareCard() {
+            const dateStr = new Date().toISOString().split('T')[0];
+            document.getElementById('poster-date').innerText = dateStr;
+            document.getElementById('p-net').innerText = Math.round(MVC.Model.cache.netMonthly);
+            document.getElementById('p-comp').innerText = Math.round(MVC.Model.cache.compensationMonthly);
+            document.getElementById('p-rate').innerText = parseFloat(document.getElementById('v-savings-rate').innerText).toFixed(0);
+            document.getElementById('p-retire').innerText = parseFloat(document.getElementById('v-r-age').innerText).toFixed(1);
+            document.getElementById('p-fire').innerText = parseFloat(document.getElementById('v-fire-years').innerText).toFixed(1);
+
+            const container = document.getElementById('share-poster-container');
+            container.style.top = '0'; container.style.left = '0'; container.style.zIndex = '9999';
+            
+            this.showToast("正在生成打工人专属海报...");
+            setTimeout(() => {
+                html2canvas(container, { scale: 2, useCORS: true, backgroundColor: '#ffffff' }).then(canvas => {
+                    container.style.top = '-9999px'; container.style.zIndex = '-10';
+                    const link = document.createElement('a');
+                    link.download = `打工人报告_${dateStr}.png`;
+                    link.href = canvas.toDataURL('image/png'); link.click();
+                    this.showToast("✅ 海报生成成功，已下载！");
+                });
+            }, 500);
+        }
+    },
+
+    View: {
+        fm(num) { return Number(num).toLocaleString('zh-CN', {maximumFractionDigits:0}); },
+        
+        renderSalary(net, gross, pSec, cSec, mTax, totalCost, compensationMonthly, secMonthly, deduct, bonusNet, details) {
+            document.getElementById('v-net-monthly').innerText = this.fm(net);
+            document.getElementById('v-final-net').innerText = this.fm(net);
+            document.getElementById('v-gross-monthly').innerText = this.fm(gross);
+            document.getElementById('v-total-cost').innerText = this.fm(totalCost);
+            document.getElementById('v-ind-tax').innerText = this.fm(mTax);
+            
+            document.getElementById('v-comp-monthly').innerText = this.fm(compensationMonthly);
+            document.getElementById('v-sec-monthly').innerText = this.fm(secMonthly);
+            document.getElementById('total-deduction-val').innerText = '¥' + deduct;
+            document.getElementById('v-bonus-net').innerText = this.fm(bonusNet);
+            
+            // 渲染明细表格
+            let html = '';
+            for(let k in details) {
+                if (details[k].p === 0 && details[k].c === 0 && k === 'annuity') continue;
+                html += `
+                    <tr class="border-b border-gray-200 border-dashed">
+                        <td class="py-1.5 text-gray-600 font-bold">${details[k].name}</td>
+                        <td class="py-1.5 text-right text-blue-600 font-mono">-¥${this.fm(details[k].p)}</td>
+                        <td class="py-1.5 text-right text-red-500 font-mono">+¥${this.fm(details[k].c)}</td>
+                    </tr>
+                `;
+            }
+            html += `
+                <tr class="font-black text-sm">
+                    <td class="py-2 text-gray-800">合计</td>
+                    <td class="py-2 text-right text-blue-700 font-mono">-¥${this.fm(pSec)}</td>
+                    <td class="py-2 text-right text-red-600 font-mono">+¥${this.fm(cSec)}</td>
+                </tr>
+            `;
+            document.getElementById('ins-detail-body').innerHTML = html;
+        },
+
+        renderCashflow(monthlyIn, monthlyOut, monthlySave, monthlySaveRate) {
+            document.getElementById('v-monthly-in').innerText = this.fm(monthlyIn);
+            document.getElementById('v-monthly-out').innerText = this.fm(monthlyOut);
+            document.getElementById('v-monthly-save').innerText = this.fm(monthlySave);
+            document.getElementById('v-monthly-save-rate').innerText = monthlySaveRate.toFixed(1);
+            document.getElementById('v-yearly-save-est').innerText = this.fm(MVC.Model.cache.annualSave || 0);
+        },
+
+        renderMortgage(cPmt, fPmt, totalPmt, ratio, remP, remI) {
+            document.getElementById('v-c-payment').innerText = this.fm(cPmt);
+            document.getElementById('v-f-payment').innerText = this.fm(fPmt);
+            document.getElementById('v-m-payment').innerText = this.fm(totalPmt);
+            document.getElementById('v-m-ratio').innerText = ratio.toFixed(1) + '%';
+            document.getElementById('v-m-remain-p').innerText = remP.toFixed(1);
+            document.getElementById('v-m-remain-i').innerText = remI.toFixed(1);
+        },
+
+        renderRetirement(age, pension) {
+            document.getElementById('v-r-age').innerText = age.toFixed(2);
+            document.getElementById('v-r-pension').innerText = pension > 0 ? this.fm(pension) : '---';
+        },
+
+        renderProjections(anIn, anOut, anSave, rate, fTarget, fYears, gYears) {
+            document.getElementById('v-annual-in').innerText = this.fm(anIn);
+            document.getElementById('v-annual-out').innerText = this.fm(anOut);
+            document.getElementById('v-annual-save').innerText = this.fm(anSave);
+            document.getElementById('v-savings-rate').innerText = rate.toFixed(1) + '%';
+            
+            document.getElementById('v-fire-target').innerText = this.fm(fTarget);
+            document.getElementById('v-fire-years').innerText = fYears > 100 ? '∞ ' : fYears.toFixed(1);
+            
+            document.getElementById('v-goal-save').innerText = '¥' + this.fm(anSave);
+            document.getElementById('v-goal-years').innerText = gYears > 100 ? '∞' : gYears.toFixed(1);
+        }
+    }
+};
+
+document.addEventListener('DOMContentLoaded', () => {
+    MVC.Controller.init();
+});
+</script>
+</body>
+</html>
